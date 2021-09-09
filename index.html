@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8" />
+		<title>Mon année</title>
+		<link rel="stylesheet" href="style.css" />
+	</head>
+	<body>
+		<div id="main">
+			<form id="form" onsubmit="return false" onchange="refresh(form)">
+			    <label for="year" required>Année</label>
+				<input type="text" name="year" placeholder="20.." value="2019" />
+				<br />
+				<input type="text" name="m0" value="Janvier" />
+				<input type="file" name="i0" />
+				<br />
+				<input type="text" name="m1" value="Février" />
+				<input type="file" name="i1" />
+				<br />
+				<input type="text" name="m2" value="Mars" />
+				<input type="file" name="i2" />
+				<br />
+				<input type="text" name="m3" value="Avril" />
+				<input type="file" name="i3" />
+				<br />
+				<input type="text" name="m4" value="Mai" />
+				<input type="file" name="i4" />
+				<br />
+		 		<input type="text" name="m5" value="Juin" />
+		 		<input type="file" name="i5" />
+				<br />
+				<input type="text" name="m6" value="Juillet" />
+				<input type="file" name="i6" />
+				<br />
+				<input type="text" name="m7" value="Août" />
+				<input type="file" name="i7" />
+				<br />
+				<input type="text" name="m8" value="Septembre" />
+				<input type="file" name="i8" />
+		 		<br />
+				<input type="text" name="m9" value="Octobre" />
+				<input type="file" name="i9" />
+		 		<br />
+				<input type="text" name="m10" value="Novembre" />
+				<input type="file" name="i10" />
+				<br />
+				<input type="text" name="m11" value="Décembre" />
+				<input type="file" name="i11" />
+				<br />
+				<label for="q">Qualité</label>
+				<input type="range" name="q" min="1" max="2" value="1" />
+				<br />
+				<input type="button" value="Actualiser" onclick="refresh(form)" />
+				<input type="button" value="Télécharger" onclick="download(form)" >
+			</form>
+			<canvas id="aff"></canvas>
+			<script>
+				var cvs = document.getElementById('aff');
+				window.onload = () => refresh(document.getElementById('form'));
+				async function refresh(form) {
+				    var q = form.q.value;
+					cvs.width = 960*q;
+					cvs.height = 960*q;
+					var ctx = cvs.getContext('2d');
+					ctx.fillStyle = 'whitesmoke';
+					ctx.fillRect(0, 0, 960*q, 960*q);
+					ctx.textAlign = 'center';
+					ctx.fillStyle = 'black';
+					ctx.font = 120*q+'px Arial';
+					ctx.fillText(form.year.value, 480*q, 120*q);
+					ctx.font = 30*q+'px Arial';
+					for (let i = 0; i < 12; i++) {
+						//if (!form['m'+i].files || !form['m'+i].files[0]) continue;
+						let image = form['i'+i].files&&form['i'+i].files[0]? await getImageFromFile(form['i'+i].files[0]) : await getDefaultImage();
+						let iW = image.naturalWidth, iH = image.naturalHeight;
+						let c = Math.min(iW, iH);
+						try {
+						    ctx.drawImage(image, (iW-c)/2, (iH-c)/2, c, c, (i%4*240+20)*q, (~~(i/4)*260+170)*q, 200*q, 200*q);
+						} catch (e) {
+						    alert('Le '+(i+1)+'ème fichier n\'est pas une image');
+						}
+						ctx.fillText(form['m'+i].value, (i%4*240+120)*q, (~~(i/4)*260+400)*q);
+					}
+				}
+				async function getImageFromFile(file) {
+					var promise = new Promise((resolve, reject) => {
+						var reader = new FileReader();
+						var image = new Image();
+						reader.onload = e => {
+							image.src = e.target.result;
+							resolve(image);
+						}
+						reader.readAsDataURL(file);
+					});
+					return promise;
+				}
+				async function getDefaultImage() {
+				    var promise = new Promise((resolve, reject) => {
+				        var image = new Image();
+				        image.onload = () => resolve(image);
+				        image.src = 'default.jpg';
+				    });
+				    return promise;
+				}
+				async function download(form) {
+				    await refresh(form);
+				    var element = document.createElement('a');
+				    element.setAttribute('href', cvs.toDataURL('image/png;base64'));
+				    element.setAttribute('download', form.year.value+'.png');
+				    element.style.display = 'none';
+				    document.body.appendChild(element);
+				    element.click();
+				    document.body.removeChild(element);
+				}
+			</script>
+		</div>
+	</body>
+</html>
